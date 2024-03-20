@@ -1,12 +1,40 @@
 import { useState } from "react";
 import { courses, depts, dummy_students, lecturers } from "../../../utils";
 import TopNav from "../../components/TopNav";
+import abi from "../../constant/abi.json"
+import { useAccount, useReadContract, useWatchPendingTransactions, useWriteContract } from "wagmi";
 
 const AdminDashboard = () => {
   const [allCourses, setAllCourses] = useState(courses)
   const [alldept, setAllDept] = useState(depts)
   const [allLecturers, setAllLecturers] = useState(lecturers)
   const [allStudents, setAllStudents] = useState(dummy_students)
+  const [dept, setDept] = useState("");
+  const [courseCode, setCourseCode] = useState("");
+  const [courseTitle, setCourseTitle] = useState("");
+  const [lecturerName, setLecturerName] = useState("");
+  const [lecturerAddr, setLecturerAddr] = useState("");
+  const [stdntAddr, setStdntAddr] = useState("");
+  const [stdLevel, setStdLevel] = useState("");
+  const [stdName, setStdName] = useState("");
+
+  const{address} = useAccount();
+  const contractAddress = '0x40243955535ff34379eBC17fe514B73AAA8359F2';
+
+  const result = useReadContract({
+    abi,
+    address: contractAddress,
+    functionName: 'getAllCourses',
+  })
+
+  // console.log(result.data)
+  // all_courses
+  const transposedData = result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]));
+
+  
+  // console.log(transposedData)
+
+  const { writeContract } = useWriteContract()
   return (
     <div className="flex flex-col pb-20 bg-white">
       <TopNav type="admin" />
@@ -47,13 +75,15 @@ const AdminDashboard = () => {
                   className="shrink-0 self-start w-6 aspect-square cursor-pointer"
                 />
               </div>
-              {allCourses.length > 0 && allCourses.map((course, i) => (
+              {transposedData.length > 0 && transposedData.map((course, i) => (
                 <div key={i} className="flex justify-between gap-4 px-2 py-2.5 mt-6 text-sky-600 bg-blue-100 rounded-lg">
                   <div className="flex flex-col justify-center">
                     <div className="text-lg tracking-normal leading-7">
-                      {course.name}
+                      {course[0]}
                     </div>
-                    <div className="mt-2 text-xs tracking-normal">{course.code}</div>
+                    <div className="mt-2 text-xs tracking-normal">{course[1]}</div>
+                    <div className="mt-2 text-xs tracking-normal">{course[5]}</div>
+                    <div className="mt-2 text-xs tracking-normal">Total Student: {Number(course[4])}</div>
                   </div>
                   <img
                     onClick={() => document.getElementById('edit_course').showModal()}
@@ -76,13 +106,13 @@ const AdminDashboard = () => {
                   className="shrink-0 self-start w-6 aspect-square cursor-pointer"
                 />
               </div>
-              {allLecturers.length > 0 && allLecturers.map((lecturer, i) => (
+              {transposedData?.length > 0 && transposedData?.map((lecturer, i) => (
                 <div key={i} className="flex gap-4 justify-between px-2 py-2.5 mt-6 text-xs tracking-normal text-sky-600 bg-blue-100 rounded-lg">
                   <div className="flex flex-col justify-center">
                     <div className="text-lg tracking-normal leading-6">
-                      {lecturer.name}
+                      {lecturer[3]}
                     </div>
-                    <div className="mt-2">{lecturer.dept}</div>
+                    <div className="mt-2">{lecturer[0]}</div>
                     <div className="mt-2">{lecturer.course}</div>
                   </div>
                   <img
@@ -201,30 +231,54 @@ const AdminDashboard = () => {
       {/* add course modal */}
       <dialog id="add_course" className="modal">
         <div className="modal-box bg-white text-black">
-          <h3 className="font-bold text-lg">Add Course Details</h3>
+          <h3 className="font-bold text-lg">Add Course Details1</h3>
           <div className="w-full mt-5">
-            <div className="w-full mb-4">
+            {/* <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Department</label>
               <select className="select select-bordered w-full bg-white">
                 {alldept?.length > 0 && alldept.map((dept, i) => (
                   <option key={i}>{dept.name}</option>
                 ))}
               </select>
-            </div>
+            </div> */}
             <div className="w-full mb-4">
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Department</label>
+              <input type="text" placeholder="Enter Department" className="input input-bordered w-full bg-white" onChange={(e)=>setDept(e.target.value)} />
+            </div>
               <label className="text-sm pb-2 block">Course Title</label>
-              <input type="text" placeholder="Enter Course Title" className="input input-bordered w-full bg-white" />
+              <input type="text" placeholder="Enter Course Title" className="input input-bordered w-full bg-white" onChange={(e)=>setCourseTitle(e.target.value)} />
             </div>
             <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Course Code</label>
-              <input type="text" placeholder="Enter Course Code" className="input input-bordered w-full bg-white" />
+              <input type="text" placeholder="Enter Course Code" className="input input-bordered w-full bg-white" onChange={(e)=>setCourseCode(e.target.value)} />
             </div>
+            
           </div>
           <div className="modal-action flex w-full">
             <form method="dialog">
               <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
             </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Create Course</button>
+            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white"
+             onClick={() => 
+              writeContract({ 
+                abi,
+                address: contractAddress,
+                functionName: 'createCourse',
+                args: [
+                  courseCode,courseTitle, address, dept,
+                ],
+                // onSuccess: () => {
+                //   console.log("Insurance registration successful");
+                // },
+            
+                // onError(error) {
+                //   console.error("Error: ", error);
+                // }
+             })
+            }
+            
+            >Create Course</button>
           </div>
         </div>
       </dialog>
@@ -268,9 +322,9 @@ const AdminDashboard = () => {
       {/* add lecturer modal */}
       <dialog id="add_lect" className="modal">
         <div className="modal-box bg-white text-black">
-          <h3 className="font-bold text-lg">Add Lecturer</h3>
+          <h3 className="font-bold text-lg">Add Lecturer1</h3>
           <div className="w-full mt-5">
-            <div className="w-full mb-4">
+            {/* <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Department</label>
               <select className="select select-bordered w-full bg-white">
                 {alldept?.length > 0 && alldept.map((item, i) => (
@@ -285,18 +339,39 @@ const AdminDashboard = () => {
                   <option value={item.code} key={i}>{item.name}</option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Course Code</label>
+              <input type="text" placeholder="Enter lecturer Name" className="input input-bordered w-full bg-white" onChange={(e)=>setCourseCode(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Lecturer Name</label>
-              <input type="text" placeholder="Enter lecturer Name" className="input input-bordered w-full bg-white" />
+              <input type="text" placeholder="Enter lecturer Name" className="input input-bordered w-full bg-white" onChange={(e)=>setLecturerName(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Lecturer Address(ID)</label>
+              <input type="text" placeholder="Enter lecturer Name" className="input input-bordered w-full bg-white" onChange={(e)=>setLecturerAddr(e.target.value)}/>
             </div>
           </div>
           <div className="modal-action flex w-full">
             <form method="dialog">
               <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
             </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Add Lecturer</button>
+            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white" 
+            onClick={() => 
+              writeContract({ 
+                abi,
+                address: contractAddress,
+                functionName: 'assignLecturers',
+                args: [
+                  courseCode,
+                  lecturerName,
+                  lecturerAddr,
+                ],
+             })
+            }
+            >Add Lecturer</button>
           </div>
         </div>
       </dialog>
@@ -342,33 +417,59 @@ const AdminDashboard = () => {
         <div className="modal-box bg-white text-black">
           <h3 className="font-bold text-lg">Add Student</h3>
           <div className="w-full mt-5">
-            <div className="w-full mb-4">
+            {/* <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Department</label>
               <select className="select select-bordered w-full bg-white">
                 {alldept?.length > 0 && alldept.map((item, i) => (
                   <option value={item.name} key={i}>{item.name}</option>
                 ))}
               </select>
-            </div>
-            <div className="w-full mb-4">
+            </div> */}
+            {/* <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Course</label>
               <select className="select select-bordered w-full bg-white">
                 {allCourses?.length > 0 && allCourses.map((item, i) => (
                   <option value={item.code} key={i}>{item.name}</option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             <div className="w-full mb-4">
               <label className="text-sm pb-2 block">Student Name</label>
-              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" />
+              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" onChange={(e)=>setStdName(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Student Level</label>
+              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" onChange={(e)=>setStdLevel(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Student Address(ID)</label>
+              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" onChange={(e)=>setStdntAddr(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Department</label>
+              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" onChange={(e)=>setDept(e.target.value)}/>
             </div>
           </div>
           <div className="modal-action flex w-full">
             <form method="dialog">
               <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
             </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Add Student</button>
+            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white"
+            onClick={() => 
+              writeContract({ 
+                abi,
+                address: contractAddress,
+                functionName: 'registerStudentDetails',
+                args: [
+                  stdntAddr,
+                  stdName,
+                  stdLevel,
+                  dept,
+                ],
+             })
+            }
+            >Add Student</button>
           </div>
         </div>
       </dialog>

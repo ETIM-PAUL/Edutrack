@@ -1,3 +1,4 @@
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { Link, NavLink } from "react-router-dom"
 
 const TopNav = (type) => {
@@ -44,13 +45,14 @@ const TopNav = (type) => {
           className="shrink-0 self-stretch w-9 rounded-full aspect-square object-cover"
         />
         <div className="flex-auto self-stretch my-auto">
-          GHDJJjdjr74848nh...
+          {/* GHDJJjdjr74848nh... */}
+          <ConnectButton label="Sign in" showBalance={false} accountStatus="address" />
         </div>
-        <img
+        {/* <img
           loading="lazy"
           src="https://cdn.builder.io/api/v1/image/assets/TEMP/1854b7a23ce9574b1afe00e81eb2c20ecebf24f1e6f7c837239bd9d79f230c89?"
           className="shrink-0 self-stretch my-auto w-4 aspect-square"
-        />
+        /> */}
       </div>
     </div>
   )
