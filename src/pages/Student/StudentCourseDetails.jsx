@@ -1,8 +1,42 @@
 import { useNavigate } from "react-router-dom";
 import TopNav from "../../components/TopNav";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useEffect, useState } from "react";
+import { contractAddress } from "../../constant/address";
+;
+import abi from "../../constant/abi.json";
+
 
 const StudentCourseDetails = () => {
   const navigate = useNavigate();
+  const {address} = useAccount();
+  const [data, setData] = useState([]);
+  const [randomNumber, setRandomNumber] = useState();
+
+  const currentUrl = window.location.href;
+
+  // Split the URL by '/' to get the individual parts
+  const urlParts = currentUrl.split('/');
+  
+  // Assuming the course code is the last part of the URL
+  const courseCode = urlParts[urlParts.length - 1];
+  const result = useReadContract({
+    abi,
+    address: contractAddress,
+    functionName: "getMySingleCourse",
+    args: [address, courseCode],
+  });
+
+  useEffect(()=>{
+    if (result && result.data) {
+      // const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
+      setData(result.data);
+      
+    }
+  },[result])
+
+
+  const { writeContract } = useWriteContract();
 
   return (
     <div className="flex flex-col bg-white">
@@ -17,7 +51,8 @@ const StudentCourseDetails = () => {
               className="shrink-0 w-9 aspect-square cursor-pointer"
             />
             <div className="flex-auto my-auto max-md:max-w-full">
-              Chemical Particles and Metals
+              {data[0]}
+              {/* Chemical Particles and Metals */}
             </div>
           </div>
         </div>
@@ -43,10 +78,10 @@ const StudentCourseDetails = () => {
                 </div>
                 <div className="flex gap-5 justify-between px-7 py- mt-20 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-[399px] max-md:px-5 max-md:mt-10">
                   <div className="flex-1 py-2 text-green-600">
-                    10 Lectures held
+                    {Number(data[1])} Lectures held
                   </div>
                   <div className="flex-1 py-2 text-neutral-600">
-                    15 lectures in total
+                  {Number(data[1])} lectures in total
                   </div>
                 </div>
               </div>
@@ -59,7 +94,10 @@ const StudentCourseDetails = () => {
         <button onClick={() => document.getElementById('course_attendance_min').showModal()} className="px-6 py-3 border border-sky-600 bg-white text-sky-600 rounded-lg max-md:px-5">
           View Result
         </button>
-        <button onClick={() => document.getElementById('mark_attendance').showModal()} className="px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5">
+        <button onClick={() => document.getElementById('mark_attendance').showModal()} className="px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5"
+        
+        >
+       
           Mark Attendance
         </button>
       </div>
@@ -144,14 +182,28 @@ const StudentCourseDetails = () => {
           <h3 className="font-bold text-lg">Attendance Code</h3>
           <div className="w-full mt-5">
             <div className="w-full mb-4">
-              <input type="text" minLength={6} maxLength={6} className="input input-bordered w-full bg-white" placeholder="Enter six(6) digit code" />
+              <input type="text" minLength={6} maxLength={6} className="input input-bordered w-full bg-white" placeholder="Enter six(6) digit code" onChange={(e)=>setRandomNumber(e.target.value)} />
             </div>
           </div>
           <div className="modal-action flex w-full">
             <form method="dialog">
               <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
             </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Mark Attendance</button>
+            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white"
+            onClick={() => 
+              writeContract({ 
+                abi,
+                address: contractAddress,
+                functionName: 'markAttendance',
+                args: [
+                  courseCode,
+                  randomNumber,
+                  address,
+                ],
+             })
+            }
+           
+            >Mark Attendance</button>
           </div>
         </div>
       </dialog>

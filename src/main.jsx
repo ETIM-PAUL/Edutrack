@@ -69,14 +69,7 @@ const config = getDefaultConfig({
   chains: [mainnetB],
   // ssr: true, // If your dApp uses server side rendering (SSR)
 });
-// export const config = createConfig({
-//   chains: [mainnetB],
-//   connectors: [metaMask()],
-//   transports: {
-//     // [mainnet.id]: http(),
-//     [mainnetB.id]: http('https://testnet.bitfinity.network'),
-//   },
-// })
+
 
 const queryClient = new QueryClient();
 

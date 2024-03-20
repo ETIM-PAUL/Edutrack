@@ -1,7 +1,28 @@
 import { Link } from "react-router-dom";
 import TopNav from "../../components/TopNav";
+import { useEffect, useState } from "react";
+import { useAccount, useReadContract } from "wagmi";
+import abi from "../../constant/abi.json";
+import { contractAddress } from "../../constant/address";
 
 const Courses = () => {
+  const [data, setData] = useState([]);
+  const { address } = useAccount();
+
+  const result = useReadContract({
+    abi,
+    address: contractAddress,
+    functionName: "getMyAssignedCourses",
+    args: [address],
+  });
+
+  useEffect(() => {
+    if (result && result.data) {
+      setData(result.data);
+    }
+  }, [result]);
+
+  
   return (
     <div className="flex flex-col pb-20 bg-white">
       <TopNav type="lecturer" />
@@ -21,7 +42,12 @@ const Courses = () => {
             </div>
           </div>
         </div>
-        <Link to="/lecturer/course-details/1" className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
+        <div className="flex gap-4">
+
+        {
+         data[0]?.length>0 && data[0]?.map((course, index)=>(
+
+        <Link to={`/lecturer/course-details/${course}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
           <img
             loading="lazy"
             srcSet="https://source.unsplash.com/1600x900/?portrait"
@@ -29,10 +55,11 @@ const Courses = () => {
           />
           <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
             <div className="text-lg tracking-normal text-black whitespace-nowrap">
-              Chemical Particles and Metals
+              {/* Chemical Particles and Metals  */}
+              {course}
             </div>
-            <div className="mt-2 text-sky-600">CHE 302</div>
-            <div className="mt-2 text-ellipsis text-neutral-600">
+            {/* <div className="mt-2 text-sky-600">CHE 302</div> */}
+            {/* <div className="mt-2 text-ellipsis text-neutral-600">
               Chemical Particles and Metals is a comprehensive course designed
               to provide students with a deep understanding of the properties,
               behavior, and applications of chemical particles and metals in
@@ -40,7 +67,7 @@ const Courses = () => {
               fundamental principles of chemistry related to particles and
               metals, including their atomic structure, bonding, reactivity, and
               physical properties.
-            </div>
+            </div> */}
           </div>
           <div className="flex gap-1 px-4 mt-6 text-base leading-6 text-center text-sky-600 whitespace-nowrap max-md:px-5">
             <img
@@ -51,6 +78,9 @@ const Courses = () => {
             <div className="my-auto">+25</div>
           </div>
         </Link>
+          ))
+        }
+        </div>
       </div>
     </div>
   );

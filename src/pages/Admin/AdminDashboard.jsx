@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { courses, depts, dummy_students, lecturers } from "../../../utils";
 import TopNav from "../../components/TopNav";
 import abi from "../../constant/abi.json"
 import { useAccount, useReadContract, useWatchPendingTransactions, useWriteContract } from "wagmi";
+import { contractAddress } from "../../constant/address";
 
 const AdminDashboard = () => {
   const [allCourses, setAllCourses] = useState(courses)
@@ -17,9 +18,10 @@ const AdminDashboard = () => {
   const [stdntAddr, setStdntAddr] = useState("");
   const [stdLevel, setStdLevel] = useState("");
   const [stdName, setStdName] = useState("");
+  const [transposedData, setTransposedData] = useState([]);
 
   const{address} = useAccount();
-  const contractAddress = '0x40243955535ff34379eBC17fe514B73AAA8359F2';
+  // const contractAddress = '0x40243955535ff34379eBC17fe514B73AAA8359F2';
 
   const result = useReadContract({
     abi,
@@ -29,10 +31,21 @@ const AdminDashboard = () => {
 
   // console.log(result.data)
   // all_courses
-  const transposedData = result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]));
+  // if (!result || !result.data) {
+  //   return <div>Loading...</div>; 
+  // }
 
-  
-  // console.log(transposedData)
+  // Transpose the data
+
+
+  useEffect(() => {
+    if (result && result.data) {
+      const transposedData = result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]));
+
+      setTransposedData(transposedData);
+    }
+  }, [result]);
+
 
   const { writeContract } = useWriteContract()
   return (
@@ -106,7 +119,7 @@ const AdminDashboard = () => {
                   className="shrink-0 self-start w-6 aspect-square cursor-pointer"
                 />
               </div>
-              {transposedData?.length > 0 && transposedData?.map((lecturer, i) => (
+              {transposedData[0]?.length > 0 && transposedData[0][3]?.length && transposedData?.map((lecturer, i) => (
                 <div key={i} className="flex gap-4 justify-between px-2 py-2.5 mt-6 text-xs tracking-normal text-sky-600 bg-blue-100 rounded-lg">
                   <div className="flex flex-col justify-center">
                     <div className="text-lg tracking-normal leading-6">
@@ -128,6 +141,7 @@ const AdminDashboard = () => {
           <div className="flex flex-col ml-5 w-3/12 max-md:ml-0 max-md:w-full">
             <div className="flex flex-col p-4 rounded-xl border border-gray-400 border-solid max-md:mt-5">
               <div className="flex gap-5 justify-between px-1 py-2.5 text-lg font-medium tracking-normal leading-6 text-black whitespace-nowrap border-b border-gray-400 border-solid">
+                
                 <div>Students</div>
                 <img
                   onClick={() => document.getElementById('add_student').showModal()}
@@ -135,7 +149,23 @@ const AdminDashboard = () => {
                   src="https://cdn.builder.io/api/v1/image/assets/TEMP/210160469ba9ac542f7b235ae7648ca035563f790bdc2ba38cc3672bcae5a014?"
                   className="shrink-0 self-start w-6 aspect-square cursor-pointer"
                 />
+
+               
+                
               </div>
+              <div className="flex gap-5 justify-between px-1 py-2.5 text-lg font-medium tracking-normal leading-6 text-black whitespace-nowrap border-b border-gray-400 border-solid">
+                  <h2 className="">
+
+                  Assign Student To Course
+                  </h2>
+
+                  <img
+                  onClick={() => document.getElementById('assign_student').showModal()}
+                  loading="lazy"
+                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/210160469ba9ac542f7b235ae7648ca035563f790bdc2ba38cc3672bcae5a014?"
+                  className="shrink-0 self-start w-6 aspect-square cursor-pointer"
+                />
+                  </div>
               {allStudents.length > 0 && allStudents.map((student, i) => (
                 <div key={i} className="flex gap-4 justify-between px-2 py-2.5 mt-6 text-sky-600 bg-blue-100 rounded-lg">
                   <div className="flex flex-col justify-center">
@@ -470,6 +500,60 @@ const AdminDashboard = () => {
              })
             }
             >Add Student</button>
+          </div>
+        </div>
+      </dialog>
+
+      {/* assign student modal */}
+      <dialog id="assign_student" className="modal">
+        <div className="modal-box bg-white text-black">
+          <h3 className="font-bold text-lg">Assign Student to Course</h3>
+          <div className="w-full mt-5">
+            {/* <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Department</label>
+              <select className="select select-bordered w-full bg-white">
+                {alldept?.length > 0 && alldept.map((item, i) => (
+                  <option value={item.name} key={i}>{item.name}</option>
+                ))}
+              </select>
+            </div> */}
+            {/* <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Course</label>
+              <select className="select select-bordered w-full bg-white">
+                {allCourses?.length > 0 && allCourses.map((item, i) => (
+                  <option value={item.code} key={i}>{item.name}</option>
+                ))}
+              </select>
+            </div> */}
+
+           
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Student Address(ID)</label>
+              <input type="text" placeholder="Enter student name" className="input input-bordered w-full bg-white" onChange={(e)=>setStdntAddr(e.target.value)}/>
+            </div>
+            <div className="w-full mb-4">
+              <label className="text-sm pb-2 block">Course Code</label>
+              <input type="text" placeholder="Enter Course Code" className="input input-bordered w-full bg-white" onChange={(e)=>setCourseCode(e.target.value)}/>
+            </div>
+          </div>
+          <div className="modal-action flex w-full">
+            <form method="dialog">
+              <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
+            </form>
+            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white"
+            onClick={() => 
+              writeContract({ 
+                abi,
+                address: contractAddress,
+                functionName: 'registerStudentToCourse',
+                args: [
+                  stdntAddr,
+                  courseCode,
+                  address,
+                ],
+             })
+            }
+            >Assign Student</button>
           </div>
         </div>
       </dialog>

@@ -1,7 +1,29 @@
 import { Link } from "react-router-dom";
 import TopNav from "../../components/TopNav";
+import { useAccount, useReadContract } from "wagmi";
+import { contractAddress } from "../../constant/address";
+import abi from '../../constant/abi.json';
+import { useEffect, useState } from "react";
 
 const StudentCourses = () => {
+  const {address} = useAccount();
+  const [data, setData] = useState([]);
+  const result = useReadContract({
+    abi,
+    address: contractAddress,
+    functionName: "getMyRegisteredCourse",
+    args: [address],
+  });
+
+  useEffect(()=>{
+    if (result && result.data) {
+      const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
+      setData(transposedData);
+      
+    }
+  },[result])
+
+
   return (
     <div className="flex flex-col pb-20 bg-white">
       <TopNav type="student" />
@@ -21,7 +43,10 @@ const StudentCourses = () => {
             </div>
           </div>
         </div>
-        <Link to="/student/course-details/1" className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
+        {
+          data.map((data, index)=>(
+
+        <Link to={`/student/course-details/${data[1]}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
           <img
             loading="lazy"
             srcSet="https://source.unsplash.com/1600x900/?portrait"
@@ -29,9 +54,9 @@ const StudentCourses = () => {
           />
           <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
             <div className="text-lg tracking-normal text-black whitespace-nowrap">
-              Chemical Particles and Metals
+              {data[0]}
             </div>
-            <div className="mt-2 text-sky-600">CHE 302</div>
+            <div className="mt-2 text-sky-600">{data[1]}</div>
             <div className="mt-2 text-ellipsis text-neutral-600">
               Chemical Particles and Metals is a comprehensive course designed
               to provide students with a deep understanding of the properties,
@@ -51,6 +76,8 @@ const StudentCourses = () => {
             <div className="my-auto">+25</div>
           </div>
         </Link>
+          ))
+        }
       </div>
     </div>
   );

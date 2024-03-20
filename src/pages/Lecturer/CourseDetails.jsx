@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { students } from "../../../utils";
 import TopNav from "../../components/TopNav";
+import { useAccount, useReadContract } from "wagmi";
+import { contractAddress } from "../../constant/address";
+import abi from "../../constant/abi.json";
 
 const CourseDetails = () => {
   const [selectedStudent, setSelectedStudent] = useState()
   const [studentModal, setStudentModal] = useState()
+  const [data, setData] = useState([]);
+  const { address } = useAccount();
   // Function to handle checkbox change
   const handleCheckboxChange = (event, student) => {
     if (selectedStudent === student) {
@@ -16,6 +21,33 @@ const CourseDetails = () => {
       setStudentModal(true)
     }
   };
+  
+  const currentUrl = window.location.href;
+
+// Split the URL by '/' to get the individual parts
+const urlParts = currentUrl.split('/');
+
+// Assuming the course code is the last part of the URL
+const courseCode = urlParts[urlParts.length - 1];
+
+// console.log(courseCode)
+
+  const result = useReadContract({
+    abi,
+    address: contractAddress,
+    functionName: "getResgiteredCourseStdt",
+    args: [courseCode],
+  });
+
+  useEffect(() => {
+    if (result && result.data) {
+      const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
+      setData(transposedData);
+      console.log(transposedData)
+    }
+  }, [result]);
+
+  
 
   return (
     <div className="flex flex-col bg-white">
@@ -29,7 +61,8 @@ const CourseDetails = () => {
               className="shrink-0 w-9 aspect-square"
             />
             <div className="flex-auto my-auto max-md:max-w-full">
-              Chemical Particles and Metals
+              {/* Chemical Particles and Metals */}
+              {courseCode}
             </div>
           </div>
           <div className="flex gap-5 justify-between pr-3 text-lg font-medium tracking-normal leading-6 text-white whitespace-nowrap">
@@ -106,16 +139,16 @@ const CourseDetails = () => {
                     </label>
                   </th>
                   <th>Name</th>
-                  <th>Registration Number</th>
-                  <th>CA Score</th>
-                  <th>Exam Score</th>
-                  <th>Total Score</th>
+                  <th>Department</th>
+                  <th>Attendance</th>
+                  <th>Assesment Score</th>
+                  <th>Level</th>
                   <th>Grade</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {students?.map((student, i) => (
+                {data?.map((student, i) => (
                   <tr key={i} className="hover:zinc-400 hover:border-zinc-400">
                     <th>
                       <label >
@@ -132,17 +165,17 @@ const CourseDetails = () => {
                           </div>
                         </div>
                         <div>
-                          <div className="font-bold">{student?.name}</div>
+                          <div className="font-bold">{student[0]}</div>
                           {/* <div className="text-sm opacity-50">United States</div> */}
                         </div>
                       </div>
                     </td>
                     <td>
-                      {student?.reg_num}
+                      {student[1]}
                     </td>
-                    <td>{student?.ca_score}</td>
-                    <td>{student.exam_score}</td>
-                    <td>{student.ca_score + student.exam_score}</td>
+                    <td>{Number(student[4])}</td>
+                    <td>{Number(student[3])}</td>
+                    <td>{student[2]}</td>
                     <td>B</td>
                     <th>
                       <button onClick={() => { document.getElementById('stud_attendance_modal').showModal(); setSelectedStudent(student) }} className="btn btn-ghost btn-xs">details</button>
