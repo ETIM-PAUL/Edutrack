@@ -15,7 +15,7 @@ const StudentClasslist = () => {
             src="https://cdn.builder.io/api/v1/image/assets/TEMP/96d5312de6de7e2a2c8263e5ace49008832171e4a852a44522cd9738216b6580?"
             className="shrink-0 w-9 aspect-square cursor-pointer"
           />
-          <div className="flex-auto my-auto max-md:max-w-full">Class List </div>
+          <div className="flex-auto my-auto max-md:max-w-full">Courses Lecturer </div>
         </div>
         <div className="flex flex-col px-9 py-4 mt-6 bg-white rounded-3xl max-md:px-5 max-md:max-w-full">
           <div className="overflow-x-auto">

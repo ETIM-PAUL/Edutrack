@@ -3,21 +3,27 @@ import TopNav from "../../components/TopNav";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { useEffect, useState } from "react";
 import { contractAddress } from "../../constant/address";
-;
+import { readContract, waitForTransactionReceipt } from '@wagmi/core'
 import abi from "../../constant/abi.json";
+import { defaultconfig } from "../../main";
+import { toast } from "react-toastify";
 
 
 const StudentCourseDetails = () => {
   const navigate = useNavigate();
-  const {address} = useAccount();
+  const { address } = useAccount();
   const [data, setData] = useState([]);
+  const [codeModal, setCodeModal] = useState(false);
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [courseDet, setCourseDet] = useState([]);
   const [randomNumber, setRandomNumber] = useState();
+  const { writeContract, writeContractAsync } = useWriteContract();
 
   const currentUrl = window.location.href;
 
   // Split the URL by '/' to get the individual parts
   const urlParts = currentUrl.split('/');
-  
+
   // Assuming the course code is the last part of the URL
   const courseCode = urlParts[urlParts.length - 1];
   const result = useReadContract({
@@ -27,16 +33,63 @@ const StudentCourseDetails = () => {
     args: [address, courseCode],
   });
 
-  useEffect(()=>{
+  async function getData() {
+    const result = await readContract(defaultconfig, {
+      abi,
+      address: contractAddress,
+      functionName: 'getMySingleCourse',
+      args: [address, courseCode],
+    })
+
+    if (result) {
+      console.log(result);
+      setCourseDet(result);
+    }
+  }
+
+  useEffect(() => {
+    getData();
+    console.log(result)
     if (result && result.data) {
       // const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
       setData(result.data);
-      
+
     }
-  },[result])
+  }, [])
+
+  const signCode = async () => {
+    try {
+      setCodeLoading(true)
+      const signCodeResult = writeContractAsync({
+        abi,
+        address: contractAddress,
+        functionName: 'markAttendance',
+        args: [
+          courseCode,
+          randomNumber,
+          address,
+        ],
+      })
+
+      const result = await waitForTransactionReceipt(defaultconfig, {
+        hash: await signCodeResult,
+      })
+
+      if (result.status === "success") {
+        console.log(result)
+        setCodeLoading(false)
+        setCodeModal(false)
+        // getData();
+        toast.success("Attendance Signed Successfully", 5000)
+      }
+
+    } catch (error) {
+      console.log(error)
+      setCodeLoading(false)
+    }
+  }
 
 
-  const { writeContract } = useWriteContract();
 
   return (
     <div className="flex flex-col bg-white">
@@ -51,7 +104,7 @@ const StudentCourseDetails = () => {
               className="shrink-0 w-9 aspect-square cursor-pointer"
             />
             <div className="flex-auto my-auto max-md:max-w-full">
-              {data[0]}
+              {courseDet["0"]}
               {/* Chemical Particles and Metals */}
             </div>
           </div>
@@ -76,12 +129,14 @@ const StudentCourseDetails = () => {
                   particles and metals, including their atomic structure,
                   bonding, reactivity, and physical properties.
                 </div>
-                <div className="flex gap-5 justify-between px-7 py- mt-20 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-[399px] max-md:px-5 max-md:mt-10">
+                <div className="flex gap-5 justify-between px-7 py- mt-20 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-fit max-md:px-5 max-md:mt-10">
                   <div className="flex-1 py-2 text-green-600">
-                    {Number(data[1])} Lectures held
+                    {courseDet["2"] !== undefined && Number(courseDet["2"])} Lecture(s) Held
                   </div>
-                  <div className="flex-1 py-2 text-neutral-600">
-                  {Number(data[1])} lectures in total
+                </div>
+                <div className="flex gap-5 justify-between px-7 py- mt-2 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-fit max-md:px-5 max-md:mt-10">
+                  <div className="flex-1 py-2">
+                    Last Attendance Code -  <span className="text-green-600">{courseDet["3"] !== undefined && Number(courseDet["3"])}</span>
                   </div>
                 </div>
               </div>
@@ -94,10 +149,9 @@ const StudentCourseDetails = () => {
         <button onClick={() => document.getElementById('course_attendance_min').showModal()} className="px-6 py-3 border border-sky-600 bg-white text-sky-600 rounded-lg max-md:px-5">
           View Result
         </button>
-        <button onClick={() => document.getElementById('mark_attendance').showModal()} className="px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5"
-        
+        <button onClick={() => setCodeModal(true)} className="px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5"
+
         >
-       
           Mark Attendance
         </button>
       </div>
@@ -177,36 +231,27 @@ const StudentCourseDetails = () => {
       </dialog>
 
       {/* generate code modal */}
-      <dialog id="mark_attendance" className="modal">
-        <div className="modal-box bg-white text-black">
-          <h3 className="font-bold text-lg">Attendance Code</h3>
-          <div className="w-full mt-5">
-            <div className="w-full mb-4">
-              <input type="text" minLength={6} maxLength={6} className="input input-bordered w-full bg-white" placeholder="Enter six(6) digit code" onChange={(e)=>setRandomNumber(e.target.value)} />
+      {codeModal &&
+        <>
+          <input type="checkbox" checked={true} id="my_modal_6" className="modal-toggle" />
+          <div role="dialog" className="modal">
+            <div className="modal-box bg-white text-black">
+              <h3 className="font-bold text-lg">Attendance Code</h3>
+              <div className="w-full mt-5">
+                <div className="w-full mb-4">
+                  <input type="text" minLength={6} maxLength={6} className="input input-bordered w-full bg-white" placeholder="Enter attendance code" onChange={(e) => setRandomNumber(e.target.value)} />
+                </div>
+              </div>
+              <div className="modal-action flex w-full">
+                <form method="dialog">
+                  <button disabled={codeLoading} onClick={() => setCodeModal(false)} className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white disabled:bg-red-800 disabled:cursor-not-allowed disabled:opacity-80">Cancel</button>
+                </form>
+                <button onClick={() => signCode()} disabled={codeLoading} className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white disabled:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-80">{codeLoading ? "Processing" : "Mark Attendance"}</button>
+              </div>
             </div>
           </div>
-          <div className="modal-action flex w-full">
-            <form method="dialog">
-              <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
-            </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white"
-            onClick={() => 
-              writeContract({ 
-                abi,
-                address: contractAddress,
-                functionName: 'markAttendance',
-                args: [
-                  courseCode,
-                  randomNumber,
-                  address,
-                ],
-             })
-            }
-           
-            >Mark Attendance</button>
-          </div>
-        </div>
-      </dialog>
+        </>
+      }
 
     </div>
   );

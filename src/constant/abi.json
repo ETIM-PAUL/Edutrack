@@ -230,6 +230,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "_codeAttendance",
+        "type": "uint256"
+      },
+      {
         "internalType": "bool",
         "name": "courseStatus",
         "type": "bool"
@@ -266,6 +271,34 @@
         "internalType": "uint256[]",
         "name": "",
         "type": "uint256[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllstudent",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
       },
       {
         "internalType": "string[]",
@@ -372,6 +405,11 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",

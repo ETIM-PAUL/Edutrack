@@ -46,7 +46,7 @@ const TopNav = (type) => {
         />
         <div className="flex-auto self-stretch my-auto">
           {/* GHDJJjdjr74848nh... */}
-          <ConnectButton label="Sign in" showBalance={false} accountStatus="address" />
+          <ConnectButton label="Connect Wallet" showBalance={true} />
         </div>
         {/* <img
           loading="lazy"

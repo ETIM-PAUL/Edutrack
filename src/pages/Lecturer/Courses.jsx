@@ -4,29 +4,36 @@ import { useEffect, useState } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import abi from "../../constant/abi.json";
 import { contractAddress } from "../../constant/address";
+import { readContract } from '@wagmi/core'
+import { defaultconfig } from "../../main";
 
 const Courses = () => {
   const [data, setData] = useState([]);
   const { address } = useAccount();
 
-  const result = useReadContract({
-    abi,
-    address: contractAddress,
-    functionName: "getMyAssignedCourses",
-    args: [address],
-  });
+  async function getData() {
+    const result = await readContract(defaultconfig, {
+      abi,
+      address: contractAddress,
+      functionName: 'getAllCourses',
+    })
+
+    if (result) {
+      const transposedData = result?.map((_, colIndex) => result?.map(row => row[colIndex]));
+      console.log(transposedData)
+      setData(transposedData?.filter((data) => data?.[0] !== undefined && data[2] === address));
+    }
+  }
 
   useEffect(() => {
-    if (result && result.data) {
-      setData(result.data);
-    }
-  }, [result]);
+    getData();
+  }, [])
 
-  
+
   return (
     <div className="flex flex-col pb-20 bg-white">
       <TopNav type="lecturer" />
-      <div className="flex flex-col px-20 mt-12 w-full max-md:px-5 max-md:mt-10 max-md:max-w-full">
+      <div className="flex flex-col px-20 mt-12 md:mt-40 w-full max-md:px-5 max-md:mt-10 max-md:max-w-full">
         <div className="flex gap-5 justify-between max-md:flex-wrap max-md:max-w-full">
           <div className="flex-auto my-auto text-3xl font-bold tracking-normal text-black">
             My Courses
@@ -44,42 +51,31 @@ const Courses = () => {
         </div>
         <div className="flex gap-4">
 
-        {
-         data[0]?.length>0 && data[0]?.map((course, index)=>(
-
-        <Link to={`/lecturer/course-details/${course}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
-          <img
-            loading="lazy"
-            srcSet="https://source.unsplash.com/1600x900/?portrait"
-            className="w-full aspect-[2.56] object-cover"
-          />
-          <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
-            <div className="text-lg tracking-normal text-black whitespace-nowrap">
-              {/* Chemical Particles and Metals  */}
-              {course}
-            </div>
-            {/* <div className="mt-2 text-sky-600">CHE 302</div> */}
-            {/* <div className="mt-2 text-ellipsis text-neutral-600">
-              Chemical Particles and Metals is a comprehensive course designed
-              to provide students with a deep understanding of the properties,
-              behavior, and applications of chemical particles and metals in
-              various scientific and industrial contexts. The course covers
-              fundamental principles of chemistry related to particles and
-              metals, including their atomic structure, bonding, reactivity, and
-              physical properties.
-            </div> */}
-          </div>
-          <div className="flex gap-1 px-4 mt-6 text-base leading-6 text-center text-sky-600 whitespace-nowrap max-md:px-5">
-            <img
-              loading="lazy"
-              srcSet="https://source.unsplash.com/1600x900/?portrait"
-              className="shrink-0 rounded-full w-10 h-10 object-cover"
-            />
-            <div className="my-auto">+25</div>
-          </div>
-        </Link>
+          {data?.length > 0 && data?.map((course, index) => (
+            <Link to={`/lecturer/course-details/${course["5"]}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
+              <img
+                loading="lazy"
+                srcSet="https://source.unsplash.com/1600x900/?portrait"
+                className="w-full aspect-[2.56] object-cover"
+              />
+              <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
+                <div className="text-xs tracking-normal text-black whitespace-nowrap">
+                  <span className="font-bold text-lg">{course["1"]}</span> - {course["5"]}
+                </div>
+              </div>
+              <div className="flex gap-1 px-4 mt-2 text-base leading-6 text-center text-sky-600 whitespace-nowrap max-md:px-5">
+                {Number(course["4"]) > 0 &&
+                  <img
+                    loading="lazy"
+                    srcSet="https://source.unsplash.com/1600x900/?portrait"
+                    className="shrink-0 rounded-full w-10 h-10 object-cover"
+                  />
+                }
+                <div className="my-auto text-green font-bold">{Number(course["4"]) > 0 ? +Number(course["4"]) : "No Students Yet"}</div>
+              </div>
+            </Link>
           ))
-        }
+          }
         </div>
       </div>
     </div>

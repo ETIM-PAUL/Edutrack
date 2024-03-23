@@ -1,12 +1,13 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import {
   createBrowserRouter,
+  Link,
   RouterProvider,
 } from "react-router-dom";
-import Dashboard from './pages/Lecturer/Dashboard.jsx';
+import LecturerDashboard from './pages/Lecturer/LecturerDashboard.jsx';
 import Courses from './pages/Lecturer/Courses.jsx';
 import CourseDetails from './pages/Lecturer/CourseDetails.jsx';
 import StudentDashboard from './pages/Student/StudentDashboard.jsx';
@@ -21,6 +22,8 @@ import {
   getDefaultConfig,
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { createConfig, WagmiProvider, http } from 'wagmi';
 import {
   mainnet,
@@ -37,7 +40,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { defineChain } from 'viem'
- 
+
 export const mainnetB = defineChain({
   id: 355113,
   name: 'Bitfinity Testnet',
@@ -69,6 +72,12 @@ const config = getDefaultConfig({
   chains: [mainnetB],
   // ssr: true, // If your dApp uses server side rendering (SSR)
 });
+export const defaultconfig = getDefaultConfig({
+  appName: 'My RainbowKit App',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [mainnetB],
+  // ssr: true, // If your dApp uses server side rendering (SSR)
+});
 
 
 const queryClient = new QueryClient();
@@ -76,7 +85,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Home />,
   },
   {
     path: "/admin/dashboard",
@@ -84,7 +93,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/lecturer/dashboard",
-    element: <Dashboard />,
+    element: <LecturerDashboard />,
   },
   {
     path: "/lecturer/courses",
@@ -120,13 +129,27 @@ const router = createBrowserRouter([
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+function Home() {
+  useEffect(() => {
+    window.location.replace("https://edutrack.framer.website")
+  }, [])
+  return (
+    <div>
+
+    </div>
+  )
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
   <React.StrictMode>
-      <WagmiProvider config={config}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-    <RouterProvider router={router} />
-    </RainbowKitProvider>
+          <RouterProvider router={router} />
+          <ToastContainer />
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   </React.StrictMode>

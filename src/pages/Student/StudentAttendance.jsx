@@ -1,9 +1,37 @@
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import abi from "../../constant/abi.json";
+import { contractAddress } from "../../constant/address";
+import { readContract, waitForTransactionReceipt } from '@wagmi/core'
+import { defaultconfig } from "../../main";
 import { student_courses } from "../../../utils";
 import TopNav from "../../components/TopNav";
 import { useNavigate } from "react-router-dom";
 
 const StudentAttendance = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState([]);
+  const { address } = useAccount();
+
+  async function getData() {
+    const result = await readContract(defaultconfig, {
+      abi,
+      address: contractAddress,
+      functionName: 'getMyRegisteredCourse',
+      args: [
+        address
+      ],
+    })
+
+    if (result) {
+      const transposedData = result?.map((_, colIndex) => result?.map(row => row[colIndex]));
+      setData(transposedData?.filter((data) => data?.[0] !== undefined));
+    }
+  }
+
+  useEffect(() => {
+    getData();
+  }, [])
 
   return (
     <div className="flex flex-col bg-white">
@@ -27,26 +55,24 @@ const StudentAttendance = () => {
                 <tr className="text-black bg-zinc-300 border-zinc-400">
                   <th>Course Title</th>
                   <th>Course Code</th>
-                  <th>Total Lectures</th>
                   <th>Lectures Marked</th>
-                  <th>Percentage</th>
+                  <th>Grade</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {student_courses?.map((student, i) => (
+                {data?.length > 0 && data?.map((student, i) => (
                   <tr key={i} className="hover:bg-zinc-400 hover:border-zinc-400">
                     <td>
-                      {student?.name}
+                      {student["0"]}
                     </td>
                     <td>
-                      {student?.course_code}
+                      {student["1"]}
                     </td>
-                    <td>{student?.total_lectures}</td>
-                    <td>{student.lectures_marked}</td>
-                    <td>{student.percentage}</td>
+                    <td>{Number(student["2"])}</td>
+                    <td>{Number(student["3"])}</td>
                     <th>
-                      <button onClick={() => navigate(`/student/course-details/${i + 1}`)} className="justify-center items-center text-center w-full hover:cursor-pointer px-4 py-3 text-lg font-medium tracking-normal leading-6 text-white bg-sky-600 rounded-lg">mark</button>
+                      <button onClick={() => navigate(`/student/course-details/${student["1"]}`)} className="justify-center items-center text-center w-full hover:cursor-pointer px-4 py-3 text-lg font-medium tracking-normal leading-6 text-white bg-sky-600 rounded-lg">mark</button>
                     </th>
                   </tr>
                 ))}

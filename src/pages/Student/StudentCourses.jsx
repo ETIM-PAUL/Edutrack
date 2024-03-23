@@ -6,7 +6,7 @@ import abi from '../../constant/abi.json';
 import { useEffect, useState } from "react";
 
 const StudentCourses = () => {
-  const {address} = useAccount();
+  const { address } = useAccount();
   const [data, setData] = useState([]);
   const result = useReadContract({
     abi,
@@ -15,13 +15,13 @@ const StudentCourses = () => {
     args: [address],
   });
 
-  useEffect(()=>{
+  useEffect(() => {
     if (result && result.data) {
-      const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
+      const transposedData = result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
       setData(transposedData);
-      
+      console.log(transposedData)
     }
-  },[result])
+  }, [])
 
 
   return (
@@ -44,38 +44,38 @@ const StudentCourses = () => {
           </div>
         </div>
         {
-          data.map((data, index)=>(
+          data.map((data, index) => (
 
-        <Link to={`/student/course-details/${data[1]}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
-          <img
-            loading="lazy"
-            srcSet="https://source.unsplash.com/1600x900/?portrait"
-            className="w-full aspect-[2.56] object-cover"
-          />
-          <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
-            <div className="text-lg tracking-normal text-black whitespace-nowrap">
-              {data[0]}
-            </div>
-            <div className="mt-2 text-sky-600">{data[1]}</div>
-            <div className="mt-2 text-ellipsis text-neutral-600">
-              Chemical Particles and Metals is a comprehensive course designed
-              to provide students with a deep understanding of the properties,
-              behavior, and applications of chemical particles and metals in
-              various scientific and industrial contexts. The course covers
-              fundamental principles of chemistry related to particles and
-              metals, including their atomic structure, bonding, reactivity, and
-              physical properties.
-            </div>
-          </div>
-          <div className="flex gap-1 px-4 mt-6 text-base leading-6 text-center text-sky-600 whitespace-nowrap max-md:px-5">
-            <img
-              loading="lazy"
-              srcSet="https://source.unsplash.com/1600x900/?portrait"
-              className="shrink-0 rounded-full w-10 h-10 object-cover"
-            />
-            <div className="my-auto">+25</div>
-          </div>
-        </Link>
+            <Link to={`/student/course-details/${data[1]}`} key={index} className="flex flex-col pb-4 mt-6 max-w-full bg-white rounded-xl shadow-2xl w-[360px] cursor-pointer">
+              <img
+                loading="lazy"
+                srcSet="https://source.unsplash.com/1600x900/?portrait"
+                className="w-full aspect-[2.56] object-cover"
+              />
+              <div className="flex flex-col px-4 mt-6 text-xs tracking-normal">
+                <div className="text-lg tracking-normal text-black whitespace-nowrap">
+                  {data[0]}
+                </div>
+                <div className="mt-2 text-sky-600">{data[1]}</div>
+                <div className="mt-2 text-ellipsis text-neutral-600">
+                  Chemical Particles and Metals is a comprehensive course designed
+                  to provide students with a deep understanding of the properties,
+                  behavior, and applications of chemical particles and metals in
+                  various scientific and industrial contexts. The course covers
+                  fundamental principles of chemistry related to particles and
+                  metals, including their atomic structure, bonding, reactivity, and
+                  physical properties.
+                </div>
+              </div>
+              {/* <div className="flex gap-1 px-4 mt-6 text-base leading-6 text-center text-sky-600 whitespace-nowrap max-md:px-5">
+                <img
+                  loading="lazy"
+                  srcSet="https://source.unsplash.com/1600x900/?portrait"
+                  className="shrink-0 rounded-full w-10 h-10 object-cover"
+                />
+                <div className="my-auto">+25</div>
+              </div> */}
+            </Link>
           ))
         }
       </div>

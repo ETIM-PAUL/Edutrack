@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 import { students } from "../../../utils";
 import TopNav from "../../components/TopNav";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { contractAddress } from "../../constant/address";
 import abi from "../../constant/abi.json";
+import { useNavigate } from "react-router-dom";
+import { defaultconfig } from "../../main";
+import { readContract, waitForTransactionReceipt } from '@wagmi/core'
+import { toast } from "react-toastify";
 
 const CourseDetails = () => {
   const [selectedStudent, setSelectedStudent] = useState()
+  const [generateCodeLoading, setGenerateCodeLoading] = useState(false)
+  const [generateCodeModal, setGenerateCodeModal] = useState(false)
+  const [updateScoreLoading, setUpdateScoreLoading] = useState(false)
   const [studentModal, setStudentModal] = useState()
+  const { writeContractAsync } = useWriteContract()
   const [data, setData] = useState([]);
   const { address } = useAccount();
+  const navigate = useNavigate();
   // Function to handle checkbox change
   const handleCheckboxChange = (event, student) => {
     if (selectedStudent === student) {
@@ -21,33 +30,92 @@ const CourseDetails = () => {
       setStudentModal(true)
     }
   };
-  
+
   const currentUrl = window.location.href;
 
-// Split the URL by '/' to get the individual parts
-const urlParts = currentUrl.split('/');
+  // Split the URL by '/' to get the individual parts
+  const urlParts = currentUrl.split('/');
 
-// Assuming the course code is the last part of the URL
-const courseCode = urlParts[urlParts.length - 1];
+  // Assuming the course code is the last part of the URL
+  const courseCode = urlParts[urlParts.length - 1];
 
-// console.log(courseCode)
+  async function getData() {
+    const result = await readContract(defaultconfig, {
+      abi,
+      address: contractAddress,
+      functionName: 'getResgiteredCourseStdt',
+      args: [courseCode],
+    })
 
-  const result = useReadContract({
-    abi,
-    address: contractAddress,
-    functionName: "getResgiteredCourseStdt",
-    args: [courseCode],
-  });
+    if (result) {
+      const transposedData = result?.map((_, colIndex) => result?.map(row => row[colIndex]));
+      setData(transposedData?.filter((data) => data?.[0] !== undefined));
+    }
+  }
 
   useEffect(() => {
-    if (result && result.data) {
-      const transposedData =result?.data[0]?.map((_, colIndex) => result?.data?.map(row => row[colIndex]))
-      setData(transposedData);
-      console.log(transposedData)
-    }
-  }, [result]);
+    getData()
+  }, []);
 
-  
+
+  const updateGrade = async () => {
+    try {
+      setGenerateCodeLoading(true)
+      const generateCodeResult = writeContractAsync({
+        abi,
+        address: contractAddress,
+        functionName: 'createAttendanceCode',
+        args: [
+          courseCode,
+        ],
+      })
+
+      const result = await waitForTransactionReceipt(defaultconfig, {
+        hash: await generateCodeResult,
+      })
+
+      if (result.status === "success") {
+        console.log(result)
+        setGenerateCodeLoading(false)
+        setGenerateCodeModal(false)
+        // getData();
+        toast.success("Attendance Code Generated and Shared", 5000)
+      }
+
+    } catch (error) {
+      console.log(error)
+      setGenerateCodeLoading(false)
+    }
+  }
+
+  const generateCode = async () => {
+    try {
+      setGenerateCodeLoading(true)
+      const generateCodeResult = writeContractAsync({
+        abi,
+        address: contractAddress,
+        functionName: 'createAttendanceCode',
+        args: [
+          courseCode,
+        ],
+      })
+
+      const result = await waitForTransactionReceipt(defaultconfig, {
+        hash: await generateCodeResult,
+      })
+
+      if (result.status === "success") {
+        setGenerateCodeLoading(false)
+        setGenerateCodeModal(false)
+        getData();
+        toast.success("Attendance Code Generated and Shared", 5000)
+      }
+
+    } catch (error) {
+      console.log(error)
+      setGenerateCodeLoading(false)
+    }
+  }
 
   return (
     <div className="flex flex-col bg-white">
@@ -56,9 +124,10 @@ const courseCode = urlParts[urlParts.length - 1];
         <div className="flex gap-5 justify-between w-full max-md:flex-wrap max-md:max-w-full">
           <div className="flex gap-5 justify-between my-auto text-3xl font-bold tracking-normal text-black max-md:flex-wrap">
             <img
+              onClick={() => navigate(-1)}
               loading="lazy"
               src="https://cdn.builder.io/api/v1/image/assets/TEMP/96d5312de6de7e2a2c8263e5ace49008832171e4a852a44522cd9738216b6580?"
-              className="shrink-0 w-9 aspect-square"
+              className="shrink-0 w-9 aspect-square cursor-pointer"
             />
             <div className="flex-auto my-auto max-md:max-w-full">
               {/* Chemical Particles and Metals */}
@@ -66,15 +135,15 @@ const courseCode = urlParts[urlParts.length - 1];
             </div>
           </div>
           <div className="flex gap-5 justify-between pr-3 text-lg font-medium tracking-normal leading-6 text-white whitespace-nowrap">
-            <button onClick={() => document.getElementById('my_modal_1').showModal()} className="grow justify-center px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5">
+            <button onClick={() => setGenerateCodeModal(true)} className="grow justify-center px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5">
               Generate Code
             </button>
-            <img
+            {/* <img
               onClick={() => document.getElementById('my_modal_2').showModal()}
               loading="lazy"
               src="https://cdn.builder.io/api/v1/image/assets/TEMP/564b3cd720391cdc471b3ec930d6fd095fa59905d370c9a7de80b0224fc903a4?"
               className="shrink-0 my-auto w-6 aspect-square cursor-pointer"
-            />
+            /> */}
           </div>
         </div>
         <div className="mt-6 max-md:max-w-full">
@@ -97,14 +166,11 @@ const courseCode = urlParts[urlParts.length - 1];
                   particles and metals, including their atomic structure,
                   bonding, reactivity, and physical properties.
                 </div>
-                <div className="flex gap-5 justify-between px-7 py- mt-20 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-[399px] max-md:px-5 max-md:mt-10">
-                  <div className="flex-1 py-2 text-green-600">
+                {/* <div className="px-7 mt-20 max-w-full text-lg tracking-normal leading-6 bg-white rounded-xl border w-fit max-md:px-5 max-md:mt-10">
+                  <div className="flex- py-2 text-green-600">
                     10 Lectures held
                   </div>
-                  <div className="flex-1 py-2 text-neutral-600">
-                    15 lectures in total
-                  </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -143,7 +209,6 @@ const courseCode = urlParts[urlParts.length - 1];
                   <th>Attendance</th>
                   <th>Assesment Score</th>
                   <th>Level</th>
-                  <th>Grade</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -153,7 +218,7 @@ const courseCode = urlParts[urlParts.length - 1];
                     <th>
                       <label >
                         <input
-                          checked={selectedStudent?.reg_num === student.reg_num}
+                          checked={selectedStudent?.reg_num !== student.reg_num}
                           onChange={(e) => handleCheckboxChange(e, student)} type="checkbox" name={i} className="checkbox" />
                       </label>
                     </th>
@@ -176,7 +241,6 @@ const courseCode = urlParts[urlParts.length - 1];
                     <td>{Number(student[4])}</td>
                     <td>{Number(student[3])}</td>
                     <td>{student[2]}</td>
-                    <td>B</td>
                     <th>
                       <button onClick={() => { document.getElementById('stud_attendance_modal').showModal(); setSelectedStudent(student) }} className="btn btn-ghost btn-xs">details</button>
                     </th>
@@ -251,27 +315,28 @@ const courseCode = urlParts[urlParts.length - 1];
       </dialog>
 
       {/* generate code modal */}
-      <dialog id="my_modal_1" className="modal">
-        <div className="modal-box bg-white text-black">
-          <h3 className="font-bold text-lg">Attendance Code</h3>
-          <div className="w-full mt-5">
-            <div className="w-full mb-4">
-              <label className="text-sm pb-2 block">Number of students in class</label>
-              <input type="text" minLength={1} className="input input-bordered w-full bg-white" />
-            </div>
-            <div className="w-full mb-4">
-              <label className="text-sm pb-2 block">Input Code</label>
-              <input type="text" minLength={6} maxLength={6} className="input input-bordered w-full bg-white" />
+      {generateCodeModal &&
+        <>
+          <input type="checkbox" readOnly checked={true} id="assign_student" className="modal-toggle" />
+          <div className="modal" role="dialog">
+            <div className="modal-box bg-white text-black">
+              <h3 className="font-bold text-lg">Attendance Code</h3>
+              <div className="w-full my-4">
+                <label className="text-sm pb-2 block">Number of Students</label>
+                <input type="number" placeholder="Enter Number" className="input input-bordered w-full bg-white" />
+              </div>
+              <div className="modal-action flex w-full">
+                <form method="dialog">
+                  <button
+                    disabled={generateCodeLoading}
+                    className="btn px-6 py-3 bg-red-500 hover:bg-red-500 border-none rounded-lg max-md:px-5 text-white disabled:bg-red-800 disabled:cursor-not-allowed disabled:opacity-80">Cancel</button>
+                </form>
+                <button onClick={() => generateCode()} disabled={generateCodeLoading} className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white disabled:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-80">{generateCodeLoading ? "Processing" : "Generate Code"}</button>
+              </div>
             </div>
           </div>
-          <div className="modal-action flex w-full">
-            <form method="dialog">
-              <button className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
-            </form>
-            <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Generate Code</button>
-          </div>
-        </div>
-      </dialog>
+        </>
+      }
 
       {/* edit student modal */}
       {studentModal &&
@@ -279,28 +344,19 @@ const courseCode = urlParts[urlParts.length - 1];
           <input type="checkbox" checked={true} id="my_modal_6" className="modal-toggle" />
           <div className="modal" role="dialog">
             <div className="modal-box bg-white text-black">
-              <h3 className="font-bold text-lg">Edit Student Info</h3>
+              <h3 className="font-bold text-lg">Update Student Grade</h3>
               <div className="w-full mt-5">
-                <div className="w-full mb-4">
-                  <label className="text-sm pb-2 block">Student name</label>
-                  <input type="text" value={selectedStudent?.name} disabled className="input input-bordered w-full text-black disabled:bg-white bg-white" />
-                </div>
-                <div className="w-full mb-4">
-                  <label className="text-sm pb-2 block">Student reg no</label>
-                  <input type="text" value={selectedStudent?.reg_num} disabled className="input input-bordered w-full text-black disabled:bg-white bg-white" />
-                </div>
                 <div className="w-full mb-4">
                   <label className="text-sm pb-2 block">CA Score</label>
                   <input type="text" value={selectedStudent?.ca_score} className="input input-bordered border-black w-full bg-white" />
                 </div>
-                <div className="w-full mb-4">
-                  <label className="text-sm pb-2 block">Exam Score</label>
-                  <input type="text" value={selectedStudent?.exam_score} className="input input-bordered border-black w-full bg-white" />
-                </div>
               </div>
               <div className="modal-action flex w-full">
-                <button onClick={() => { setStudentModal(false); setSelectedStudent(null) }} className="btn px-6 py-3 bg-red-500 hover:bg-red-700 border-none rounded-lg max-md:px-5 text-white">Cancel</button>
-                <button className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white">Save Changes</button>
+                <button
+                  disabled={updateScoreLoading}
+                  onClick={() => setStudentModal(false)}
+                  className="btn px-6 py-3 bg-red-500 hover:bg-red-500 border-none rounded-lg max-md:px-5 text-white disabled:bg-red-800 disabled:cursor-not-allowed disabled:opacity-80">Cancel</button>
+                <button onClick={() => updateGrade()} disabled={updateScoreLoading} className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white disabled:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-80">{updateScoreLoading ? "Processing" : "Generate Code"}</button>
               </div>
             </div>
           </div>
