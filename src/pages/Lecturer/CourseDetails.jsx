@@ -329,6 +329,7 @@ const CourseDetails = () => {
                 <form method="dialog">
                   <button
                     disabled={generateCodeLoading}
+                    onClick={() => setGenerateCodeModal(false)}
                     className="btn px-6 py-3 bg-red-500 hover:bg-red-500 border-none rounded-lg max-md:px-5 text-white disabled:bg-red-800 disabled:cursor-not-allowed disabled:opacity-80">Cancel</button>
                 </form>
                 <button onClick={() => generateCode()} disabled={generateCodeLoading} className="btn px-6 py-3 bg-sky-600 border-none rounded-lg max-md:px-5 text-white disabled:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-80">{generateCodeLoading ? "Processing" : "Generate Code"}</button>
