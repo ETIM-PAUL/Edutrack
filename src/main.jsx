@@ -1,10 +1,8 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
 import './index.css'
 import {
   createBrowserRouter,
-  Link,
   RouterProvider,
 } from "react-router-dom";
 import LecturerDashboard from './pages/Lecturer/LecturerDashboard.jsx';
@@ -22,19 +20,9 @@ import {
   getDefaultConfig,
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { createConfig, WagmiProvider, http } from 'wagmi';
-import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
-  zora,
-  // mainnetB
-} from 'wagmi/chains';
-import { metaMask } from 'wagmi/connectors'
+import { WagmiProvider } from 'wagmi';
 import {
   QueryClientProvider,
   QueryClient,
@@ -85,7 +73,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LecturerDashboard />,
+    element: <Home />,
   },
   {
     path: "/admin/dashboard",
@@ -129,16 +117,16 @@ const router = createBrowserRouter([
   },
 ]);
 
-// function Home() {
-//   useEffect(() => {
-//     window.location.replace("https://edutrack.framer.website")
-//   }, [])
-//   return (
-//     <div>
+function Home() {
+  useEffect(() => {
+    window.location.replace("https://edutrack.framer.website")
+  }, [])
+  return (
+    <div>
 
-//     </div>
-//   )
-// }
+    </div>
+  )
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
