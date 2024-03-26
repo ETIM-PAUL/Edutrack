@@ -73,7 +73,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: <AdminDashboard />,
   },
   {
     path: "/admin/dashboard",
@@ -117,16 +117,16 @@ const router = createBrowserRouter([
   },
 ]);
 
-function Home() {
-  useEffect(() => {
-    window.location.replace("https://edutrack.framer.website")
-  }, [])
-  return (
-    <div>
+// function Home() {
+//   useEffect(() => {
+//     window.location.replace("https://edutrack.framer.website")
+//   }, [])
+//   return (
+//     <div>
 
-    </div>
-  )
-}
+//     </div>
+//   )
+// }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
